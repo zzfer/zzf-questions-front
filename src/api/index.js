@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8082',
+  baseURL: 'http://localhost:9090',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -21,16 +21,11 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   response => {
-    const { data } = response
-    if (data.code === 200) {
-      return data
-    } else {
-      throw new Error(data.message || '请求失败')
-    }
+    return response
   },
   error => {
     console.error('API错误:', error)
-    throw error
+    throw new Error('请求失败')
   }
 )
 

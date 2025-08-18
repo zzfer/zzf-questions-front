@@ -1,11 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Home from '../views/Home.vue'
 import AdminPanel from '../views/AdminPanel.vue'
 import FrontendDisplay from '../views/FrontendDisplay.vue'
+import HouseValueCalculator from '../views/HouseValueCalculator.vue'
+import ExpenseForm from '../views/ExpenseForm.vue'
+import ExpenseStatistics from '../views/ExpenseStatistics.vue'
+import CategoryManagement from '../views/CategoryManagement.vue'
+
 
 const routes = [
   {
     path: '/',
-    redirect: '/admin'
+    name: 'Home',
+    component: Home
   },
   {
     path: '/admin',
@@ -16,7 +23,28 @@ const routes = [
     path: '/frontend',
     name: 'Frontend',
     component: FrontendDisplay
-  }
+  },
+  {
+    path: '/house-calculator',
+    name: 'HouseCalculator',
+    component: HouseValueCalculator
+  },
+  {
+    path: '/expense-form',
+    name: 'ExpenseForm',
+    component: ExpenseForm
+  },
+  {
+    path: '/expense-statistics',
+    name: 'ExpenseStatistics',
+    component: ExpenseStatistics
+  },
+  {
+    path: '/category-management',
+    name: 'CategoryManagement',
+    component: CategoryManagement
+  },
+
 ]
 
 const router = createRouter({
