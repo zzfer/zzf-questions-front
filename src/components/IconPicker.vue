@@ -1,7 +1,7 @@
 <template>
   <div class="icon-picker">
     <el-input
-      v-model="selectedIcon"
+      :value="selectedIconLabel"
       placeholder="请选择图标"
       readonly
       @click="showDialog = true"
@@ -53,7 +53,13 @@
           :class="{ active: selectedIcon === icon.value }"
           @click="selectIcon(icon.value)"
         >
-          <Icon :icon="icon.value" width="24" height="24" />
+          <Icon 
+            :icon="icon.value" 
+            width="24" 
+            height="24" 
+            @error="handleIconError(icon)"
+            :style="{ minHeight: '24px' }"
+          />
           <span class="icon-label">{{ icon.label }}</span>
         </div>
       </div>
@@ -105,84 +111,73 @@ export default {
       ],
       allIcons: [
         // 餐饮类
-        { value: 'flat-color-icons:restaurant', label: '餐厅', category: 'food' },
-        { value: 'flat-color-icons:cafe', label: '咖啡', category: 'food' },
-        { value: 'flat-color-icons:pizza', label: '披萨', category: 'food' },
-        { value: 'flat-color-icons:beer', label: '啤酒', category: 'food' },
-        { value: 'flat-color-icons:wine', label: '红酒', category: 'food' },
-        { value: 'flat-color-icons:cake', label: '蛋糕', category: 'food' },
+        { value: 'fluent-emoji-flat:bellhop-bell', label: '餐厅', category: 'food' },
         
         // 交通类
-        { value: 'flat-color-icons:automotive', label: '汽车', category: 'transport' },
-        { value: 'flat-color-icons:bus', label: '公交', category: 'transport' },
-        { value: 'flat-color-icons:train', label: '火车', category: 'transport' },
-        { value: 'flat-color-icons:airplane', label: '飞机', category: 'transport' },
-        { value: 'flat-color-icons:taxi', label: '出租车', category: 'transport' },
-        { value: 'flat-color-icons:motorcycle', label: '摩托车', category: 'transport' },
+        { value: 'fluent-emoji-flat:bus', label: '公交', category: 'transport' },
+        { value: 'emojione-v1:train', label: '火车', category: 'transport' },
+        { value: 'twemoji:airplane', label: '飞机', category: 'transport' },
+        { value: 'openmoji:autonomous-car', label: '滴滴', category: 'transport' },
         
         // 购物类
-        { value: 'flat-color-icons:shop', label: '商店', category: 'shopping' },
-        { value: 'flat-color-icons:shopping-cart', label: '购物车', category: 'shopping' },
-        { value: 'flat-color-icons:shopping-bag', label: '购物袋', category: 'shopping' },
-        { value: 'flat-color-icons:credit-card', label: '信用卡', category: 'shopping' },
-        { value: 'flat-color-icons:money', label: '金钱', category: 'shopping' },
-        { value: 'flat-color-icons:gift', label: '礼物', category: 'shopping' },
+        { value: 'icon-park:shopping-cart', label: '购物', category: 'shopping' },
+        { value: 'streamline-emojis:wrapped-gift-2', label: '礼物', category: 'shopping' },
         
         // 娱乐类
-        { value: 'flat-color-icons:music', label: '音乐', category: 'entertainment' },
-        { value: 'flat-color-icons:video-projector', label: '投影仪', category: 'entertainment' },
-        { value: 'flat-color-icons:camera', label: '相机', category: 'entertainment' },
-        { value: 'flat-color-icons:game-controller', label: '游戏', category: 'entertainment' },
-        { value: 'flat-color-icons:tv', label: '电视', category: 'entertainment' },
-        { value: 'flat-color-icons:headphones', label: '耳机', category: 'entertainment' },
+        { value: 'icon-park:game-handle', label: '游戏', category: 'entertainment' },
+        { value: 'fluent-color:headphones-20', label: '耳机', category: 'entertainment' },
         
+        // { value: 'flat-color-icons:cafe', label: '咖啡', category: 'food' },
+        // { value: 'flat-color-icons:pizza', label: '披萨', category: 'food' },
+        // { value: 'flat-color-icons:beer', label: '啤酒', category: 'food' },
+        // { value: 'flat-color-icons:wine', label: '红酒', category: 'food' },
+        // { value: 'flat-color-icons:cake', label: '蛋糕', category: 'food' },
         // 医疗类
-        { value: 'flat-color-icons:biohazard', label: '医疗', category: 'health' },
-        { value: 'flat-color-icons:hospital', label: '医院', category: 'health' },
-        { value: 'flat-color-icons:pill', label: '药物', category: 'health' },
-        { value: 'flat-color-icons:syringe', label: '注射器', category: 'health' },
-        { value: 'flat-color-icons:stethoscope', label: '听诊器', category: 'health' },
-        { value: 'flat-color-icons:first-aid', label: '急救', category: 'health' },
-        
+        // { value: 'flat-color-icons:biohazard', label: '医疗', category: 'health' },
+        { value: 'fxemoji:hospital', label: '医院', category: 'health' },
+        { value: 'openmoji:pill', label: '药物', category: 'health' },
+        // { value: 'flat-color-icons:syringe', label: '注射器', category: 'health' },
+        // { value: 'flat-color-icons:stethoscope', label: '听诊器', category: 'health' },
+        // { value: 'flat-color-icons:first-aid', label: '急救', category: 'health' },        
         // 教育类
         { value: 'flat-color-icons:reading', label: '阅读', category: 'education' },
-        { value: 'flat-color-icons:book', label: '书籍', category: 'education' },
-        { value: 'flat-color-icons:graduation-cap', label: '毕业帽', category: 'education' },
-        { value: 'flat-color-icons:school', label: '学校', category: 'education' },
-        { value: 'flat-color-icons:pencil', label: '铅笔', category: 'education' },
-        { value: 'flat-color-icons:calculator', label: '计算器', category: 'education' },
+        // { value: 'flat-color-icons:book', label: '书籍', category: 'education' },
+        // { value: 'flat-color-icons:graduation-cap', label: '毕业帽', category: 'education' },
+        // { value: 'flat-color-icons:school', label: '学校', category: 'education' },
+        // { value: 'flat-color-icons:pencil', label: '铅笔', category: 'education' },
+        // { value: 'flat-color-icons:calculator', label: '计算器', category: 'education' },
         
         // 住房类
-        { value: 'flat-color-icons:home', label: '家', category: 'home' },
-        { value: 'flat-color-icons:apartment', label: '公寓', category: 'home' },
-        { value: 'flat-color-icons:key', label: '钥匙', category: 'home' },
-        { value: 'flat-color-icons:bed', label: '床', category: 'home' },
-        { value: 'flat-color-icons:sofa', label: '沙发', category: 'home' },
-        { value: 'flat-color-icons:lamp', label: '台灯', category: 'home' },
+        { value: 'fluent-emoji-flat:house', label: '房子', category: 'home' },
+        // { value: 'flat-color-icons:apartment', label: '公寓', category: 'home' },
+        // { value: 'flat-color-icons:key', label: '钥匙', category: 'home' },
+        // { value: 'flat-color-icons:bed', label: '床', category: 'home' },
+        // { value: 'flat-color-icons:sofa', label: '沙发', category: 'home' },
+        // { value: 'flat-color-icons:lamp', label: '台灯', category: 'home' },
         
         // 通讯类
-        { value: 'flat-color-icons:phone', label: '电话', category: 'communication' },
-        { value: 'flat-color-icons:smartphone', label: '智能手机', category: 'communication' },
-        { value: 'flat-color-icons:email', label: '邮件', category: 'communication' },
-        { value: 'flat-color-icons:chat', label: '聊天', category: 'communication' },
-        { value: 'flat-color-icons:wifi', label: 'WiFi', category: 'communication' },
-        { value: 'flat-color-icons:antenna', label: '天线', category: 'communication' },
+        // { value: 'flat-color-icons:phone', label: '智能', category: 'communication' },
+        // { value: 'flat-color-icons:smartphone', label: '智能手机', category: 'communication' },
+        // { value: 'flat-color-icons:email', label: '邮件', category: 'communication' },
+        // { value: 'flat-color-icons:chat', label: '聊天', category: 'communication' },
+        // { value: 'flat-color-icons:wifi', label: 'WiFi', category: 'communication' },
+        // { value: 'flat-color-icons:antenna', label: '天线', category: 'communication' },
         
         // 工作类
-        { value: 'flat-color-icons:briefcase', label: '公文包', category: 'work' },
-        { value: 'flat-color-icons:office', label: '办公室', category: 'work' },
-        { value: 'flat-color-icons:computer', label: '电脑', category: 'work' },
-        { value: 'flat-color-icons:printer', label: '打印机', category: 'work' },
-        { value: 'flat-color-icons:calendar', label: '日历', category: 'work' },
-        { value: 'flat-color-icons:clock', label: '时钟', category: 'work' },
+        // { value: 'flat-color-icons:briefcase', label: '公文包', category: 'work' },
+        // { value: 'flat-color-icons:office', label: '办公室', category: 'work' },
+        // { value: 'flat-color-icons:computer', label: '电脑', category: 'work' },
+        // { value: 'flat-color-icons:printer', label: '打印机', category: 'work' },
+        // { value: 'flat-color-icons:calendar', label: '日历', category: 'work' },
+        // { value: 'flat-color-icons:clock', label: '时钟', category: 'work' },
         
         // 其他类
-        { value: 'flat-color-icons:settings', label: '设置', category: 'other' },
-        { value: 'flat-color-icons:tools', label: '工具', category: 'other' },
-        { value: 'flat-color-icons:star', label: '星星', category: 'other' },
-        { value: 'flat-color-icons:heart', label: '心形', category: 'other' },
-        { value: 'flat-color-icons:flag', label: '旗帜', category: 'other' },
-        { value: 'flat-color-icons:globe', label: '地球', category: 'other' }
+        // { value: 'flat-color-icons:settings', label: '设置', category: 'other' },
+        // { value: 'flat-color-icons:tools', label: '工具', category: 'other' },
+        // { value: 'flat-color-icons:star', label: '星星', category: 'other' },
+        // { value: 'flat-color-icons:heart', label: '心形', category: 'other' },
+        // { value: 'flat-color-icons:flag', label: '旗帜', category: 'other' },
+        // { value: 'flat-color-icons:globe', label: '地球', category: 'other' }
       ],
       filteredIcons: []
     }
@@ -190,9 +185,9 @@ export default {
   computed: {
     filteredIconsByCategory() {
       if (this.selectedCategory === 'all') {
-        return this.iconList
+        return this.allIcons
       }
-      return this.iconList.filter(icon => icon.category === this.selectedCategory)
+      return this.allIcons.filter(icon => icon.category === this.selectedCategory)
     },
     filteredIcons() {
       if (!this.searchKeyword) {
@@ -202,6 +197,11 @@ export default {
         icon.label.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
         icon.value.toLowerCase().includes(this.searchKeyword.toLowerCase())
       )
+    },
+    selectedIconLabel() {
+      if (!this.selectedIcon) return ''
+      const icon = this.allIcons.find(item => item.value === this.selectedIcon)
+      return icon ? icon.label : this.selectedIcon
     }
   },
 
@@ -234,9 +234,12 @@ export default {
         // 过滤逻辑已移至computed属性中，此方法保留用于兼容性
       },
     getIconLabel(iconValue) {
-        const icon = this.iconList.find(item => item.value === iconValue)
-        return icon ? icon.label : iconValue
-      }
+      const icon = this.allIcons.find(item => item.value === iconValue)
+      return icon ? icon.label : iconValue
+    },
+    handleIconError(icon) {
+      console.warn(`图标加载失败: ${icon.value} (${icon.label})`)
+    }
   }
 }
 </script>
