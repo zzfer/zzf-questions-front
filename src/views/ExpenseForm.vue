@@ -129,12 +129,12 @@
         >
           <div class="item-left">
               <div class="category">
-                <span v-if="getIconComponent(getCategoryIcon(expense.category)) === null" 
+                <span v-if="getIconComponent(expense.categoryIcon) === null" 
                       style="margin-right: 8px; font-size: 18px;">
-                  {{ getCategoryIcon(expense.category) }}
+                  {{ expense.categoryIcon }}
                 </span>
-                <Icon v-else :icon="getIconComponent(getCategoryIcon(expense.category))" style="margin-right: 8px; font-size: 18px;" />
-                {{ getCategoryName(expense.category) }}
+                <Icon v-else :icon="getIconComponent(expense.categoryIcon)" style="margin-right: 8px; font-size: 18px;" />
+                {{ expense.categoryName }}<span class="category-desc" v-if="expense.description">({{ expense.description }})</span>
               </div>
               <div class="date">{{ formatDate(expense.expenseDate) }} · {{ expense.payer }}</div>
             </div>
@@ -229,19 +229,9 @@ const getCategoryIcon = (categoryId) => {
 
 // 获取图标名称（Iconify彩色图标）
 const getIconComponent = (iconName) => {
-  if (!iconName) return 'flat-color-icons:services'
+  if (!iconName) return null
   
-  // 如果已经是Iconify格式，直接返回
-  if (iconName && iconName.includes(':')) {
-    return iconName
-  }
-  
-  // 如果是emoji图标，直接返回
-  if (iconName && /[\u{1F300}-\u{1F9FF}]/u.test(iconName)) {
-    return null // 返回null表示使用emoji
-  }
-  
-  // 兼容旧的Element Plus图标名称映射
+  // 处理旧的Element Plus图标名称映射
   const iconMap = {
     'Food': 'flat-color-icons:restaurant',
     'Truck': 'flat-color-icons:automotive',
@@ -259,13 +249,29 @@ const getIconComponent = (iconName) => {
     'Present': 'flat-color-icons:briefcase',
     'More': 'flat-color-icons:settings'
   }
-  return iconMap[iconName] || 'flat-color-icons:services'
+  
+  // 如果是旧的图标名称，转换为新的
+  if (iconMap[iconName]) {
+    return iconMap[iconName]
+  }
+  
+  // 如果已经是Iconify格式，直接返回
+  if (iconName && iconName.includes(':')) {
+    return iconName
+  }
+  
+  // 默认返回原始名称
+  return iconName
 }
 
 // 获取分类名称
 const getCategoryName = (categoryId) => {
+  console.log(categoryId, categories.value);
+  
   const category = categories.value.find(cat => cat.id === categoryId)
-  return category ? category.name : '未知分类'
+  console.log(category);
+  
+  return category ? category.categoryName : '未知分类'
 }
 
 // 格式化日期
@@ -473,7 +479,10 @@ onMounted(() => {
   font-weight: 500;
   color: #2c3e50;
 }
-
+.category-desc{
+  opacity: .8;
+  font-size: .8rem;
+}
 .category i {
   margin-right: 8px;
   font-size: 16px;

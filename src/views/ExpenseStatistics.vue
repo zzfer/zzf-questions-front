@@ -134,7 +134,12 @@
         
         <el-table-column prop="category" label="分类" width="120">
           <template #default="scope">
-            <span>{{ getCategoryIcon(scope.row.category) }} {{ scope.row.category }}</span>
+            <span v-if="getCategoryIcon(scope.row.categoryIcon) === null" 
+                  style="margin-right: 8px; font-size: 18px;">
+              {{ scope.row.categoryIcon }}
+            </span>
+            <Icon v-else :icon="getCategoryIcon(scope.row.categoryIcon)" style="margin-right: 8px; font-size: 18px;" />
+            {{ scope.row.categoryName }}
           </template>
         </el-table-column>
         
@@ -207,6 +212,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import api from '@/api/index'
 import * as echarts from 'echarts'
+import { Icon } from '@iconify/vue'
 
 const router = useRouter()
 
@@ -238,23 +244,7 @@ const dateRange = ref([
 ])
 
 // 分类数据
-const categories = ref([
-  { name: 'FOOD', displayName: '餐饮', icon: '🍽️' },
-  { name: 'TRANSPORT', displayName: '交通', icon: '🚗' },
-  { name: 'ENTERTAINMENT', displayName: '娱乐', icon: '🎮' },
-  { name: 'SHOPPING', displayName: '购物', icon: '🛒' },
-  { name: 'HEALTHCARE', displayName: '医疗', icon: '🏥' },
-  { name: 'EDUCATION', displayName: '教育', icon: '📚' },
-  { name: 'HOUSING', displayName: '住房', icon: '🏠' },
-  { name: 'UTILITIES', displayName: '水电费', icon: '💡' },
-  { name: 'COMMUNICATION', displayName: '通讯', icon: '📱' },
-  { name: 'CLOTHING', displayName: '服装', icon: '👕' },
-  { name: 'TRAVEL', displayName: '旅行', icon: '✈️' },
-  { name: 'INVESTMENT', displayName: '投资', icon: '💰' },
-  { name: 'INSURANCE', displayName: '保险', icon: '🛡️' },
-  { name: 'GIFT', displayName: '礼品', icon: '🎁' },
-  { name: 'OTHER', displayName: '其他', icon: '📝' }
-])
+const categories = ref([])
 
 // 计算属性
 const totalAmount = computed(() => statistics.value.totalAmount || 0)
@@ -269,10 +259,52 @@ const topCategory = computed(() => {
   return statistics.value.categoryStats[0].category
 })
 
+// 加载分类数据
+const loadCategories = async () => {
+  try {
+    const response = await api.get('/api/categories')
+    categories.value = response.data
+  } catch (error) {
+    console.error('加载分类失败:', error)
+    ElMessage.error('加载分类失败')
+  }
+}
+
 // 获取分类图标
-const getCategoryIcon = (categoryName) => {
-  const category = categories.value.find(cat => cat.displayName === categoryName)
-  return category ? category.icon : '📝'
+const getCategoryIcon = (iconName) => {
+  if (!iconName) return null
+  
+  // 处理旧的Element Plus图标名称映射
+  const iconMap = {
+    'Bicycle': 'flat-color-icons:automotive',
+    'ShoppingBag': 'flat-color-icons:shop',
+    'VideoPlay': 'flat-color-icons:music',
+    'FirstAidKit': 'flat-color-icons:biohazard',
+    'Reading': 'flat-color-icons:reading',
+    'House': 'flat-color-icons:home',
+    'Iphone': 'flat-color-icons:phone',
+    'Gift': 'flat-color-icons:briefcase',
+    'More': 'flat-color-icons:settings'
+  }
+  
+  // 如果是旧的图标名称，转换为新的
+  if (iconMap[iconName]) {
+    return iconMap[iconName]
+  }
+  
+  // 如果已经是Iconify格式，直接返回
+  if (iconName && iconName.includes(':')) {
+    return iconName
+  }
+  
+  // 默认返回原始名称
+  return iconName
+}
+
+// 获取分类名称
+const getCategoryName = (categoryName) => {
+  const category = categories.value.find(cat => cat.name === categoryName)
+  return category ? category.name : categoryName || '未知分类'
 }
 
 // 格式化日期
@@ -509,6 +541,7 @@ const deleteExpense = async (id) => {
 
 // 组件挂载
 onMounted(() => {
+  loadCategories()
   loadStatistics()
   loadExpenses()
   

@@ -90,7 +90,7 @@ export default {
           { min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur' }
         ],
         icon: [
-          { required: true, message: '请选择图标', trigger: 'change' }
+          { required: true, message: '请选择图标', trigger: 'blur' }
         ]
       },
 
@@ -133,13 +133,32 @@ export default {
     },
     async saveCategory() {
       try {
-        await this.$refs.categoryFormRef.validate()
+        // 表单验证
+        const valid = await this.$refs.categoryFormRef.validate().catch(err => {
+          console.error('表单验证失败:', err)
+          return false
+        })
+        
+        if (!valid) {
+          ElMessage.error('请检查表单输入')
+          return
+        }
+        
+        // 确保数据格式正确
+        const formData = {
+          id: this.categoryForm.id,
+          name: this.categoryForm.name,
+          icon: this.categoryForm.icon,
+          description: this.categoryForm.description || ''
+        }
+        
+        console.log('提交的表单数据:', formData)
         
         if (this.isEdit) {
-          await api.put(`/api/categories/${this.categoryForm.id}`, this.categoryForm)
+          await api.put(`/api/categories/${formData.id}`, formData)
           ElMessage.success('分类更新成功')
         } else {
-          await api.post('/api/categories', this.categoryForm)
+          await api.post('/api/categories', formData)
           ElMessage.success('分类添加成功')
         }
         
@@ -147,7 +166,11 @@ export default {
         this.loadCategories()
       } catch (error) {
         console.error('保存分类失败:', error)
-        ElMessage.error('保存分类失败')
+        if (error.response && error.response.data) {
+          ElMessage.error(`保存失败: ${error.response.data.message || error.response.data}`)
+        } else {
+          ElMessage.error('保存分类失败')
+        }
       }
     },
     async deleteCategory(category) {
