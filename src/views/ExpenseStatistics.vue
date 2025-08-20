@@ -250,13 +250,13 @@ const categories = ref([])
 const totalAmount = computed(() => statistics.value.totalAmount || 0)
 const totalCount = computed(() => statistics.value.totalCount || 0)
 const avgDaily = computed(() => {
-  if (!dateRange.value || dateRange.value.length !== 2) return 0
-  const days = Math.ceil((new Date(dateRange.value[1]) - new Date(dateRange.value[0])) / (1000 * 60 * 60 * 24)) + 1
-  return days > 0 ? totalAmount.value / days : 0
+  if (!statistics.value.dailyStatistics || statistics.value.dailyStatistics.length === 0) return 0
+  const actualDays = statistics.value.dailyStatistics.length
+  return actualDays > 0 ? totalAmount.value / actualDays : 0
 })
 const topCategory = computed(() => {
-  if (!statistics.value.categoryStats || statistics.value.categoryStats.length === 0) return '-'
-  return statistics.value.categoryStats[0].category
+  if (!statistics.value.categoryStatistics || statistics.value.categoryStatistics.length === 0) return '-'
+  return statistics.value.categoryStatistics[0].category
 })
 
 // 加载分类数据
@@ -416,7 +416,7 @@ const renderCharts = () => {
 
 // 渲染饼图
 const renderPieChart = () => {
-  if (!pieChartRef.value || !statistics.value.categoryStats) return
+  if (!pieChartRef.value || !statistics.value.categoryStatistics) return
   
   if (pieChart) {
     pieChart.dispose()
@@ -424,9 +424,9 @@ const renderPieChart = () => {
   
   pieChart = echarts.init(pieChartRef.value)
   
-  const data = statistics.value.categoryStats.map(item => ({
+  const data = statistics.value.categoryStatistics.map(item => ({
     name: item.category,
-    value: item.totalAmount
+    value: item.amount
   }))
   
   const option = {
@@ -466,7 +466,7 @@ const renderPieChart = () => {
 
 // 渲染柱状图
 const renderBarChart = () => {
-  if (!barChartRef.value || !statistics.value.monthlyStats) return
+  if (!barChartRef.value || !statistics.value.monthlyStatistics) return
   
   if (barChart) {
     barChart.dispose()
@@ -474,8 +474,8 @@ const renderBarChart = () => {
   
   barChart = echarts.init(barChartRef.value)
   
-  const months = statistics.value.monthlyStats.map(item => item.month)
-  const amounts = statistics.value.monthlyStats.map(item => item.totalAmount)
+  const months = statistics.value.monthlyStatistics.map(item => item.month)
+  const amounts = statistics.value.monthlyStatistics.map(item => item.amount)
   
   const option = {
     tooltip: {

@@ -288,10 +288,19 @@ const submitForm = async () => {
     await expenseFormRef.value.validate()
     submitting.value = true
     
+    // 根据支出人设置userId：苏苏=1，飞飞=2
+    let userId = null
+    if (expenseForm.payer === '苏苏') {
+      userId = 1
+    } else if (expenseForm.payer === '飞飞') {
+      userId = 2
+    }
+    
     const formData = {
       ...expenseForm,
       amount: parseFloat(expenseForm.amount),
-      categoryId: expenseForm.category // 将category字段映射为categoryId
+      categoryId: expenseForm.category, // 将category字段映射为categoryId
+      userId: userId // 添加userId字段
     }
     // 删除原来的category字段，避免混淆
     delete formData.category
