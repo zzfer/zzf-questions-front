@@ -256,6 +256,19 @@
       v-model="showPredictionDialog"
       width="700px"
     >
+      <!-- 预测范围选择 -->
+      <div class="prediction-filter">
+        <el-form :inline="true">
+          <el-form-item label="预测范围">
+            <el-select v-model="predictionScope" placeholder="请选择预测范围" @change="onPredictionScopeChange" style="width: 200px;">
+              <el-option label="全部" value="all" />
+              <el-option label="苏苏" value="susu" />
+              <el-option label="飞飞" value="feifei" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      
       <div v-if="prediction" class="prediction-content">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -355,9 +368,16 @@ export default {
     const prediction = ref(null)
     const formRef = ref(null)
     const editingRecord = ref(null)
+    const predictionScope = ref('all')
 
     // 当前用户ID（实际项目中应该从用户状态管理中获取）
     const currentUserId = 1
+    
+    // 用户ID映射
+    const userIdMap = {
+      'susu': 1,
+      'feifei': 2
+    }
 
     // 筛选表单
     const filterForm = reactive({
@@ -472,7 +492,7 @@ export default {
         let response
         
         // 查询所有记录
-        response = await assetRecordApi.getAssetRecordsByUserId(currentUserId)
+        response = await assetRecordApi.getAllAssetRecords()
         let records = response.data || []
         
         // 应用筛选条件
@@ -506,8 +526,8 @@ export default {
     const loadStatistics = async () => {
       try {
         const [totalAssetsRes, monthlyIncomeRes] = await Promise.all([
-          assetRecordApi.calculateTotalAssetsByUserId(currentUserId),
-          assetRecordApi.calculateMonthlyIncomeByUserId(currentUserId)
+          assetRecordApi.calculateTotalAssetsForAll(),
+          assetRecordApi.calculateTotalMonthlyIncome()
         ])
         
         totalAssets.value = totalAssetsRes.data || 0
@@ -520,11 +540,24 @@ export default {
     // 加载年底预测
     const loadPrediction = async () => {
       try {
-        const response = await assetRecordApi.predictYearEndAssets(currentUserId)
+        let response
+        if (predictionScope.value === 'all') {
+          response = await assetRecordApi.predictYearEndAssetsForAll()
+        } else {
+          const userId = userIdMap[predictionScope.value]
+          response = await assetRecordApi.predictYearEndAssets(userId)
+        }
         prediction.value = response.data
       } catch (error) {
         console.error('加载年底预测失败:', error)
         ElMessage.error('加载年底预测失败')
+      }
+    }
+    
+    // 预测范围变化处理
+    const onPredictionScopeChange = async () => {
+      if (showPredictionDialog.value) {
+        await loadPrediction()
       }
     }
 
@@ -653,6 +686,7 @@ export default {
       prediction,
       formRef,
       editingRecord,
+      predictionScope,
       filterForm,
       form,
       rules,
@@ -662,6 +696,7 @@ export default {
       getRecordTypeCount,
       formatDateTime,
       onRecordTypeChange,
+      onPredictionScopeChange,
       loadAssetRecords,
       resetFilter,
       resetForm,
@@ -735,6 +770,13 @@ export default {
   background: white;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.prediction-filter {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .prediction-content {

@@ -49,6 +49,11 @@ export const assetRecordApi = {
     return api.get(`/api/asset-records/user/${userId}/total-assets`)
   },
 
+  // 计算所有人总资产
+  calculateTotalAssetsForAll() {
+    return api.get('/api/asset-records/total-assets')
+  },
+
   // 根据类型计算用户资产
   calculateAssetsByUserIdAndType(userId, recordType) {
     return api.get(`/api/asset-records/user/${userId}/assets-by-type/${recordType}`)
@@ -59,9 +64,19 @@ export const assetRecordApi = {
     return api.get(`/api/asset-records/user/${userId}/monthly-income`)
   },
 
-  // 年底资产预测
+  // 计算所有人月均收入
+  calculateTotalMonthlyIncome() {
+    return api.get('/api/asset-records/monthly-income')
+  },
+
+  // 年底资产预测（指定用户）
   predictYearEndAssets(userId) {
     return api.get(`/api/asset-records/user/${userId}/year-end-prediction`)
+  },
+
+  // 年底资产预测（全部用户）
+  predictYearEndAssetsForAll() {
+    return api.get('/api/asset-records/year-end-prediction')
   },
 
   // 获取用户最近的资产记录

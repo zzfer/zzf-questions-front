@@ -48,7 +48,7 @@
       </el-card>
     </div>
     
-    <!-- 时间筛选 -->
+    <!-- 筛选条件 -->
     <el-card class="filter-card">
       <div class="filter-row">
         <div class="filter-item">
@@ -61,7 +61,7 @@
             end-placeholder="结束日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
-            @change="loadStatistics"
+            @change="applyFilters"
           />
         </div>
         
@@ -73,6 +73,56 @@
             <el-button @click="setDateRange('quarter')">最近三月</el-button>
             <el-button @click="setDateRange('year')">最近一年</el-button>
           </el-button-group>
+        </div>
+      </div>
+      
+      <div class="filter-row">
+        <div class="filter-item">
+          <label>支出类型：</label>
+          <el-select
+            v-model="filterForm.categoryName"
+            placeholder="全部类型"
+            clearable
+            style="width: 150px"
+            @change="applyFilters"
+          >
+            <el-option
+              v-for="category in categories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.name"
+            />
+          </el-select>
+        </div>
+        
+        <div class="filter-item">
+          <label>支出人：</label>
+          <el-select
+            v-model="filterForm.payer"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+            @change="applyFilters"
+          >
+            <el-option label="苏苏" value="苏苏" />
+            <el-option label="飞飞" value="飞飞" />
+          </el-select>
+        </div>
+        
+        <div class="filter-item">
+          <label>公共支出：</label>
+          <el-radio-group
+            v-model="filterForm.isPublicExpense"
+            @change="applyFilters"
+          >
+            <el-radio :label="null">全部</el-radio>
+            <el-radio :label="true">公共支出</el-radio>
+            <el-radio :label="false">个人支出</el-radio>
+          </el-radio-group>
+        </div>
+        
+        <div class="filter-item">
+          <el-button @click="resetFilters" type="info" plain>重置筛选</el-button>
         </div>
       </div>
     </el-card>
@@ -243,6 +293,13 @@ const dateRange = ref([
   new Date().toISOString().split('T')[0]
 ])
 
+// 筛选表单
+const filterForm = ref({
+  categoryName: null,
+  payer: null,
+  isPublicExpense: null
+})
+
 // 分类数据
 const categories = ref([])
 
@@ -337,7 +394,28 @@ const setDateRange = (type) => {
   }
   
   dateRange.value = [startDate.toISOString().split('T')[0], today]
+  applyFilters()
+}
+
+// 重置筛选条件
+const resetFilters = () => {
+  filterForm.value = {
+    categoryName: null,
+    payer: null,
+    isPublicExpense: null
+  }
+  dateRange.value = [
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    new Date().toISOString().split('T')[0]
+  ]
   loadStatistics()
+  loadExpenses()
+}
+
+// 应用筛选条件
+const applyFilters = () => {
+  loadStatistics()
+  loadExpenses()
 }
 
 // 切换图表类型
@@ -356,7 +434,10 @@ const loadStatistics = async () => {
   try {
     const params = {
       startDate: dateRange.value[0],
-      endDate: dateRange.value[1]
+      endDate: dateRange.value[1],
+      categoryName: filterForm.value.categoryName,
+      payer: filterForm.value.payer,
+      isPublicExpense: filterForm.value.isPublicExpense
     }
     
     const response = await api.get('/api/expenses/statistics', { params })
@@ -379,7 +460,10 @@ const loadExpenses = async () => {
       page: currentPage.value - 1,
       size: pageSize.value,
       startDate: dateRange.value[0],
-      endDate: dateRange.value[1]
+      endDate: dateRange.value[1],
+      categoryName: filterForm.value.categoryName,
+      payer: filterForm.value.payer,
+      isPublicExpense: filterForm.value.isPublicExpense
     }
     
     const response = await api.get('/api/expenses', { params })
@@ -387,7 +471,12 @@ const loadExpenses = async () => {
     if (response.data.success) {
       expenses.value = response.data.data.content
       totalExpenses.value = response.data.data.totalElements
-      filterExpenses()
+      // 如果有搜索关键词，进行前端筛选，否则直接使用后端筛选结果
+      if (searchKeyword.value) {
+        filterExpenses()
+      } else {
+        filteredExpenses.value = expenses.value
+      }
     }
   } catch (error) {
     console.error('加载支出记录失败:', error)
@@ -397,14 +486,17 @@ const loadExpenses = async () => {
 
 // 筛选支出记录
 const filterExpenses = () => {
-  if (!searchKeyword.value) {
-    filteredExpenses.value = expenses.value
-  } else {
+  if (searchKeyword.value) {
+    // 如果有搜索关键词，在当前已筛选的数据基础上进行本地搜索
     const keyword = searchKeyword.value.toLowerCase()
-    filteredExpenses.value = expenses.value.filter(expense => 
-      expense.category.toLowerCase().includes(keyword) ||
-      (expense.description && expense.description.toLowerCase().includes(keyword))
-    )
+    const filtered = expenses.value.filter(expense => {
+      return expense.categoryName?.toLowerCase().includes(keyword) ||
+             expense.description?.toLowerCase().includes(keyword)
+    })
+    filteredExpenses.value = filtered
+  } else {
+    // 如果没有搜索关键词，显示所有已筛选的数据
+    filteredExpenses.value = expenses.value
   }
 }
 
@@ -635,6 +727,7 @@ onUnmounted(() => {
   margin-bottom: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
 .filter-row {
@@ -642,6 +735,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 30px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
 }
 
 .filter-item {
