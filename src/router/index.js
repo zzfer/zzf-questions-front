@@ -6,6 +6,7 @@ import HouseValueCalculator from '../views/HouseValueCalculator.vue'
 import ExpenseForm from '../views/ExpenseForm.vue'
 import ExpenseStatistics from '../views/ExpenseStatistics.vue'
 import CategoryManagement from '../views/CategoryManagement.vue'
+import AssetRecord from '../views/AssetRecord.vue'
 
 
 const routes = [
@@ -43,6 +44,11 @@ const routes = [
     path: '/category-management',
     name: 'CategoryManagement',
     component: CategoryManagement
+  },
+  {
+    path: '/asset-record',
+    name: 'AssetRecord',
+    component: AssetRecord
   },
 
 ]

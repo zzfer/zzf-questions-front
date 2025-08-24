@@ -59,6 +59,15 @@
         <p>管理记账分类和图标设置</p>
         <el-button type="primary" size="large">管理分类</el-button>
       </div>
+      
+      <div class="feature-card" @click="navigateTo('/asset-record')">
+        <div class="feature-icon">
+          <el-icon size="48"><Wallet /></el-icon>
+        </div>
+        <h3>资产记录</h3>
+        <p>管理您的资产和收入记录</p>
+        <el-button type="primary" size="large">管理资产</el-button>
+      </div>
 
     </div>
   </div>
@@ -66,7 +75,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { Setting, Document, Calculator, Money, DataAnalysis, Grid } from '@element-plus/icons-vue'
+import { Setting, Document, House, Money, DataAnalysis, Grid, Wallet } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
