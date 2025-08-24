@@ -26,7 +26,7 @@
       
       <div class="feature-card" @click="navigateTo('/house-calculator')">
         <div class="feature-icon">
-          <el-icon size="48"><Calculator /></el-icon>
+          <el-icon size="48"><House /></el-icon>
         </div>
         <h3>房产计算器</h3>
         <p>房产投资收益计算工具</p>

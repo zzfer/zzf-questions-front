@@ -316,7 +316,14 @@ const submitForm = async () => {
       ElMessage.success(isEdit.value ? '记账记录更新成功' : '记账记录保存成功')
       // 保存支出人到本地存储
       localStorage.setItem('lastPayer', expenseForm.payer)
-      resetForm()
+      
+      // 智能重置：编辑完成后完全重置，新增成功后部分重置
+      if (isEdit.value) {
+        resetForm()  // 编辑完成后完全重置
+      } else {
+        partialResetForm()  // 新增成功后只清空金额和备注
+      }
+      
       loadRecentExpenses()
     } else {
       ElMessage.error(response.data.message || '操作失败')
@@ -329,7 +336,14 @@ const submitForm = async () => {
   }
 }
 
-// 重置表单
+// 部分重置表单（仅清空金额和备注，用于新增成功后）
+const partialResetForm = () => {
+  expenseForm.amount = ''
+  expenseForm.description = ''
+  // 保留：分类、日期、支出人、公共支出状态
+}
+
+// 完全重置表单（用于编辑完成后和手动重置按钮）
 const resetForm = () => {
   if (expenseFormRef.value) {
     expenseFormRef.value.resetFields()
