@@ -68,14 +68,22 @@
         <p>管理您的资产和收入记录</p>
         <el-button type="primary" size="large">管理资产</el-button>
       </div>
-
+      
+      <div class="feature-card" @click="navigateTo('/strong-road')">
+        <div class="feature-icon">
+          <el-icon size="48"><Trophy /></el-icon>
+        </div>
+        <h3>强者之路</h3>
+        <p>记录每日活动，生成SVG总结</p>
+        <el-button type="primary" size="large">立即开始</el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { Setting, Document, House, Money, DataAnalysis, Grid, Wallet } from '@element-plus/icons-vue'
+import { Setting, Document, House, Money, DataAnalysis, Grid, Wallet, Trophy } from '@element-plus/icons-vue'
 
 const router = useRouter()
 

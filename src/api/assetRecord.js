@@ -54,6 +54,28 @@ export const assetRecordApi = {
     return api.get('/api/asset-records/total-assets')
   },
 
+  // 根据筛选条件计算总资产
+  calculateTotalAssetsByFilter(recordType, owner, startDate, endDate) {
+    const params = {}
+    if (recordType) params.recordType = recordType
+    if (owner) params.owner = owner
+    if (startDate) params.startDate = startDate
+    if (endDate) params.endDate = endDate
+    
+    return api.get('/api/asset-records/total-assets/filter', { params })
+  },
+
+  // 根据筛选条件计算用户总资产
+  calculateTotalAssetsByUserIdAndFilter(userId, recordType, owner, startDate, endDate) {
+    const params = {}
+    if (recordType) params.recordType = recordType
+    if (owner) params.owner = owner
+    if (startDate) params.startDate = startDate
+    if (endDate) params.endDate = endDate
+    
+    return api.get(`/api/asset-records/user/${userId}/total-assets/filter`, { params })
+  },
+
   // 根据类型计算用户资产
   calculateAssetsByUserIdAndType(userId, recordType) {
     return api.get(`/api/asset-records/user/${userId}/assets-by-type/${recordType}`)
@@ -84,6 +106,11 @@ export const assetRecordApi = {
     return api.get(`/api/asset-records/user/${userId}/recent`, {
       params: { limit }
     })
+  },
+
+  // 获取当前黄金价格（人民币/克）
+  getCurrentGoldPrice() {
+    return api.get('/api/gold-price/cny')
   }
 }
 

@@ -7,6 +7,7 @@ import ExpenseForm from '../views/ExpenseForm.vue'
 import ExpenseStatistics from '../views/ExpenseStatistics.vue'
 import CategoryManagement from '../views/CategoryManagement.vue'
 import AssetRecord from '../views/AssetRecord.vue'
+import StrongRoad from '../views/StrongRoad.vue'
 
 
 const routes = [
@@ -50,7 +51,11 @@ const routes = [
     name: 'AssetRecord',
     component: AssetRecord
   },
-
+  {
+    path: '/strong-road',
+    name: 'StrongRoad',
+    component: StrongRoad
+  },
 ]
 
 const router = createRouter({
