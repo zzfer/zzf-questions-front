@@ -181,13 +181,28 @@
         </el-form-item>
         
         <el-form-item label="金额" prop="amount">
-          <el-input-number
-            v-model="form.amount"
-            :precision="2"
-            :min="0"
-            placeholder="请输入金额"
-            style="width: 100%"
-          />
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <el-input-number
+              v-model="form.amount"
+              :precision="2"
+              :min="0"
+              placeholder="请输入金额"
+              style="flex: 1;"
+            />
+            <el-button 
+              v-if="form.recordType === 'gold'"
+              type="primary" 
+              size="small"
+              @click="fetchGoldPrice"
+              :loading="goldPriceLoading"
+              style="white-space: nowrap;"
+            >
+              获取金价
+            </el-button>
+          </div>
+          <div v-if="form.recordType === 'gold' && currentGoldPrice" style="font-size: 12px; color: #666; margin-top: 5px;">
+            当前金价: ¥{{ currentGoldPrice }}/克
+          </div>
         </el-form-item>
 
         <!-- 黄金重量字段 -->
@@ -262,8 +277,8 @@
           <el-form-item label="预测范围">
             <el-select v-model="predictionScope" placeholder="请选择预测范围" @change="onPredictionScopeChange" style="width: 200px;">
               <el-option label="全部" value="all" />
-              <el-option label="苏苏" value="susu" />
-              <el-option label="飞飞" value="feifei" />
+              <el-option label="苏苏" value="苏苏" />
+              <el-option label="飞飞" value="飞飞" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -369,14 +384,16 @@ export default {
     const formRef = ref(null)
     const editingRecord = ref(null)
     const predictionScope = ref('all')
+    const goldPriceLoading = ref(false)
+    const currentGoldPrice = ref(null)
 
     // 当前用户ID（实际项目中应该从用户状态管理中获取）
     const currentUserId = 1
     
     // 用户ID映射
     const userIdMap = {
-      'susu': 1,
-      'feifei': 2
+      '苏苏': 1,
+      '飞飞': 2
     }
 
     // 筛选表单
@@ -390,7 +407,7 @@ export default {
     const form = reactive({
       recordType: '',
       owner: '',
-      amount: null,
+      amount: 0,
       goldWeight: null,
       annualInterestRate: null,
       description: '',
@@ -402,7 +419,18 @@ export default {
     const rules = {
       recordType: [{ required: true, message: '请选择记录类型', trigger: 'change' }],
       owner: [{ required: true, message: '请选择所属人', trigger: 'change' }],
-      amount: [{ required: true, message: '请输入金额', trigger: 'blur' }],
+      amount: [
+        { 
+          validator: (rule, value, callback) => {
+            if (value !== null && value !== undefined && value < 0) {
+              callback(new Error('金额不能为负数'))
+            } else {
+              callback()
+            }
+          }, 
+          trigger: 'blur' 
+        }
+      ],
       recordDate: [{ required: true, message: '请选择记录日期', trigger: 'change' }],
       goldWeight: [
         { 
@@ -525,10 +553,24 @@ export default {
     // 加载统计数据
     const loadStatistics = async () => {
       try {
-        const [totalAssetsRes, monthlyIncomeRes] = await Promise.all([
-          assetRecordApi.calculateTotalAssetsForAll(),
-          assetRecordApi.calculateTotalMonthlyIncome()
-        ])
+        // 根据筛选条件计算总资产
+        let totalAssetsRes
+        if (filterForm.recordType || filterForm.owner || (filterForm.dateRange && filterForm.dateRange.length === 2)) {
+          // 有筛选条件时，使用筛选接口
+          const startDate = filterForm.dateRange && filterForm.dateRange.length === 2 ? filterForm.dateRange[0] : null
+          const endDate = filterForm.dateRange && filterForm.dateRange.length === 2 ? filterForm.dateRange[1] : null
+          totalAssetsRes = await assetRecordApi.calculateTotalAssetsByFilter(
+            filterForm.recordType,
+            filterForm.owner,
+            startDate,
+            endDate
+          )
+        } else {
+          // 无筛选条件时，使用原有接口
+          totalAssetsRes = await assetRecordApi.calculateTotalAssetsForAll()
+        }
+        
+        const monthlyIncomeRes = await assetRecordApi.calculateTotalMonthlyIncome()
         
         totalAssets.value = totalAssetsRes.data || 0
         monthlyIncome.value = monthlyIncomeRes.data || 0
@@ -567,6 +609,7 @@ export default {
       filterForm.owner = ''
       filterForm.dateRange = []
       loadAssetRecords()
+      loadStatistics()
     }
 
     // 重置表单
@@ -574,7 +617,7 @@ export default {
       Object.assign(form, {
         recordType: '',
         owner: '',
-        amount: null,
+        amount: 0,
         goldWeight: null,
         annualInterestRate: null,
         description: '',
@@ -599,7 +642,12 @@ export default {
           await assetRecordApi.updateAssetRecord(editingRecord.value.id, form)
           ElMessage.success('更新成功')
         } else {
-          // 新增
+          // 新增 - 根据所属人设置userId
+          if (form.owner === '苏苏') {
+            form.userId = 1
+          } else if (form.owner === '飞飞') {
+            form.userId = 2
+          }
           await assetRecordApi.createAssetRecord(form)
           ElMessage.success('创建成功')
         }
@@ -659,6 +707,34 @@ export default {
       selectedRecords.value = selection
     }
 
+    // 获取黄金价格
+    const fetchGoldPrice = async () => {
+      try {
+        goldPriceLoading.value = true
+        const response = await assetRecordApi.getCurrentGoldPrice()
+        
+        if (response.data && response.data.success) {
+          currentGoldPrice.value = response.data.price
+          
+          // 如果有黄金重量，自动计算金额
+          if (form.goldWeight && form.goldWeight > 0) {
+            const totalAmount = (parseFloat(currentGoldPrice.value) * parseFloat(form.goldWeight)).toFixed(2)
+            form.amount = parseFloat(totalAmount)
+            ElMessage.success(`已获取当前金价：¥${currentGoldPrice.value}/克，自动计算金额：¥${totalAmount}`)
+          } else {
+            ElMessage.success(`已获取当前金价：¥${currentGoldPrice.value}/克`)
+          }
+        } else {
+          ElMessage.error('获取金价失败')
+        }
+      } catch (error) {
+        console.error('获取金价失败:', error)
+        ElMessage.error('获取金价失败，请手动输入金额')
+      } finally {
+        goldPriceLoading.value = false
+      }
+    }
+
     // 监听预测对话框显示
     const handlePredictionDialog = async () => {
       if (showPredictionDialog.value) {
@@ -674,6 +750,12 @@ export default {
 
     // 监听预测对话框
     watch(() => showPredictionDialog.value, handlePredictionDialog)
+    
+    // 监听筛选条件变化
+    watch(() => [filterForm.recordType, filterForm.owner, filterForm.dateRange], async () => {
+      await loadAssetRecords()
+      await loadStatistics()
+    }, { deep: true })
 
     return {
       loading,
@@ -687,6 +769,8 @@ export default {
       formRef,
       editingRecord,
       predictionScope,
+      goldPriceLoading,
+      currentGoldPrice,
       filterForm,
       form,
       rules,
@@ -703,7 +787,8 @@ export default {
       submitForm,
       editRecord,
       deleteRecord,
-      handleSelectionChange
+      handleSelectionChange,
+      fetchGoldPrice
     }
   }
 }
